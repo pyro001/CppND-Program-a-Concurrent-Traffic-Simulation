@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include "TrafficObject.h"
 
+ enum TrafficLightPhase{red=0,green};
 // forward declarations to avoid include cycle
 class Vehicle;
 
@@ -19,9 +20,11 @@ template <class T>
 class MessageQueue
 {
 public:
-
+void send(T &&msg);
+T receive(void);
 private:
-    
+    std::deque<T> _queue;
+    std::mutex _commlock;
 };
 
 // FP.1 : Define a class „TrafficLight“ which is a child class of TrafficObject. 
@@ -30,24 +33,33 @@ private:
 // can be either „red“ or „green“. Also, add the private method „void cycleThroughPhases()“. 
 // Furthermore, there shall be the private member _currentPhase which can take „red“ or „green“ as its value. 
 
-class TrafficLight
+class TrafficLight: public TrafficObject
 {
 public:
-    // constructor / desctructor
+
+   public:
+  
+    TrafficLight(/* args */);
+    ~TrafficLight();
 
     // getters / setters
-
+    TrafficLightPhase getCurrentPhase();
+    void setCurrentPhase();
     // typical behaviour methods
-
+    void waitForGreen();
+    void simulate();
 private:
     // typical behaviour methods
-
+    TrafficLightPhase _currentPhase;
+    void cycleThroughPhases();
     // FP.4b : create a private member of type MessageQueue for messages of type TrafficLightPhase 
     // and use it within the infinite loop to push each new TrafficLightPhase into it by calling 
     // send in conjunction with move semantics.
 
     std::condition_variable _condition;
     std::mutex _mutex;
+    MessageQueue <TrafficLightPhase> _queue;
+
 };
 
 #endif

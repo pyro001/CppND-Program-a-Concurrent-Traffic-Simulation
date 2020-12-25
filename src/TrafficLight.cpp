@@ -1,10 +1,13 @@
 #include <iostream>
 #include <random>
 #include "TrafficLight.h"
-
+#include <chrono>
+#include <thread>
+#include <future>
+#define   LOOPUPDATEDELAY 1
 /* Implementation of class "MessageQueue" */
 
-/* 
+
 template <typename T>
 T MessageQueue<T>::receive()
 {
@@ -19,11 +22,11 @@ void MessageQueue<T>::send(T &&msg)
     // FP.4a : The method send should use the mechanisms std::lock_guard<std::mutex> 
     // as well as _condition.notify_one() to add a new message to the queue and afterwards send a notification.
 }
-*/
+
 
 /* Implementation of class "TrafficLight" */
 
-/* 
+ 
 TrafficLight::TrafficLight()
 {
     _currentPhase = TrafficLightPhase::red;
@@ -43,16 +46,40 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
 
 void TrafficLight::simulate()
 {
+    threads.emplace_back(std::thread(TrafficLight::cycleThroughPhases));
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public method „simulate“ is called. To do this, use the thread queue in the base class. 
 }
 
 // virtual function which is executed in a thread
 void TrafficLight::cycleThroughPhases()
-{
+{ 
+    auto now_t=std::chrono::steady_clock::now();
+    int delay= 4000+ rand()%2000;
+    while (1)
+    { 
+        std::unique_lock<std::mutex> lck(_mutex);
+        
+        
+        auto now_e=std::chrono::steady_clock::now()-now_t;
+        if(delay<std::chrono::duration_cast<std::chrono::milliseconds>(now_e).count())
+        {
+        std::cout<<"time Elapsed since last iteration :"<< std::chrono::duration_cast<std::chrono::milliseconds>(now_e).count()<<std::endl;
+        /* code */
+        lck.unlock();
+       
+       lck.lock();
+       this->_currentPhase=TrafficLightPhase((this->_currentPhase+1)%2);
+       auto ftr = std::async(std::launch::async,MessageQueue<TrafficLightPhase>::send,& _queue,std::move(_currentPhase));
+       now_t=std::chrono::steady_clock::now(); 
+       lck.unlock();
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(LOOPUPDATEDELAY));
+    }
+
+    
     // FP.2a : Implement the function with an infinite loop that measures the time between two loop cycles 
     // and toggles the current phase of the traffic light between red and green and sends an update method 
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds. 
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles. 
 }
 
-*/
