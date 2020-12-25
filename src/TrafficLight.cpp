@@ -39,7 +39,10 @@ TrafficLight::TrafficLight()
 {
     _currentPhase = TrafficLightPhase::red;
 }
-
+TrafficLight::~TrafficLight()
+{
+    
+}
 void TrafficLight::waitForGreen()
 {
     while (true)
